@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://luchshie-virtualnie-debetovie-karti.github.io/sitemap.xml
+Sitemap: https://luchshie-virtualniye-debetovie-karti.github.io/sitemap.xml
