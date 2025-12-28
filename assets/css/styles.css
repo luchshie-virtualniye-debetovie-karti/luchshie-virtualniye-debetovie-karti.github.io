@@ -15,7 +15,6 @@ body{
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   background:var(--bg);
   color:var(--text);
-  padding: 0 10px 0 10px;
   line-height:1.7;
 }
 
@@ -27,7 +26,7 @@ a{
 }
 a:hover{opacity:.9}
 
-/* Контейнер: отступы на мобилке + safe-area */
+/* Контейнер: отступы + safe-area */
 .container{
   max-width:var(--max);
   margin:0 auto;
@@ -99,7 +98,7 @@ h1{
 }
 .service h3{margin-top:0}
 
-/* Sidebar */
+/* Sidebar (оглавление справа на десктопе) */
 .sidebar{
   position:sticky;
   top:74px;
@@ -130,7 +129,7 @@ h1{
 }
 .toc a.depth-3{padding-left:16px; font-size:13px}
 
-/* Мобильное оглавление */
+/* Мобильное оглавление (только сверху) */
 .toc--mobile{display:none}
 .toc__toggle{
   width:100%;
@@ -158,12 +157,21 @@ h1{
   gap:12px;
 }
 
-
+/* Responsive */
 @media (max-width: 980px){
+  /* 1 колонка */
   .layout{grid-template-columns:1fr}
+
+  /* Убираем правый блок полностью на мобилке */
   .sidebar{display:none;}
+
+  /* Оглавление только сверху */
   .toc--mobile{display:block; margin-bottom:12px}
   .toc--desktop{display:none}
+
+  /* Делаем отступы чуть меньше на мобилке (если хочешь больше/меньше — меняй 14px) */
+  .container{
+    padding-left: max(14px, env(safe-area-inset-left));
+    padding-right: max(14px, env(safe-area-inset-right));
+  }
 }
-
-
