@@ -1,86 +1,80 @@
-// Год в футере
-const y = document.getElementById("year");
-if (y) y.textContent = new Date().getFullYear();
+(function () {
+  const headingSelector = ".article h2, .article h3";
+  const headings = Array.from(document.querySelectorAll(headingSelector));
 
-// Плавный скролл
-document.querySelectorAll("[data-scroll]").forEach(a => {
-  a.addEventListener("click", (e) => {
-    const href = a.getAttribute("href") || "";
-    if (href.startsWith("#")) {
-      const target = document.querySelector(href);
-      if (target) {
-        e.preventDefault();
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }
-  });
-});
-
-// Генерация оглавления по H2/H3 (похоже на статьи из примеров)
-function slugify(text) {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\p{L}\p{N}\s-]/gu, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
-
-const article = document.querySelector(".article");
-const headings = article ? Array.from(article.querySelectorAll("h2, h3")) : [];
-const tocDesktop = document.getElementById("tocNavDesktop");
-const tocMobile = document.getElementById("tocNavMobile");
-
-function buildToc(container) {
-  if (!container) return;
-  container.innerHTML = "";
-
-  headings.forEach(h => {
-    if (!h.id) h.id = slugify(h.textContent || "section");
-    const a = document.createElement("a");
-    a.href = `#${h.id}`;
-    a.textContent = h.textContent || "";
-    a.className = `depth-${h.tagName === "H3" ? "3" : "2"}`;
-    a.addEventListener("click", (e) => {
-      // Для мобильного: закрывать оглавление после клика
-      const tocBody = document.getElementById("tocBody");
-      const toggle = document.getElementById("tocToggle");
-      if (tocBody && toggle && !tocBody.hidden) {
-        tocBody.hidden = true;
-        toggle.setAttribute("aria-expanded", "false");
-      }
-    });
-    container.appendChild(a);
-  });
-}
-
-buildToc(tocDesktop);
-buildToc(tocMobile);
-
-// Подсветка текущего пункта оглавления
-const tocLinks = [];
-document.querySelectorAll("#tocNavDesktop a, #tocNavMobile a").forEach(a => tocLinks.push(a));
-
-function onScroll() {
-  const fromTop = window.scrollY + 110;
-  let currentId = "";
-  for (const h of headings) {
-    if (h.offsetTop <= fromTop) currentId = h.id;
+  function slugify(text) {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[«»"'.:,!?()]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
   }
-  tocLinks.forEach(a => {
-    a.classList.toggle("active", a.getAttribute("href") === `#${currentId}`);
-  });
-}
-window.addEventListener("scroll", onScroll);
-onScroll();
 
-// Мобильное оглавление: раскрытие/скрытие
-const toggle = document.getElementById("tocToggle");
-const body = document.getElementById("tocBody");
-if (toggle && body) {
-  toggle.addEventListener("click", () => {
-    const isOpen = toggle.getAttribute("aria-expanded") === "true";
-    toggle.setAttribute("aria-expanded", String(!isOpen));
-    body.hidden = isOpen;
+  // Добавляем id заголовкам (если нет)
+  headings.forEach((h) => {
+    if (!h.id) h.id = slugify(h.textContent || "");
   });
-}
+
+  const tocDesktop = document.getElementById("tocNavDesktop");
+  const tocMobile = document.getElementById("tocNavMobile");
+
+  function buildToc(container) {
+    if (!container) return;
+    container.innerHTML = "";
+    const frag = document.createDocumentFragment();
+
+    headings.forEach((h) => {
+      const a = document.createElement("a");
+      a.href = `#${h.id}`;
+      a.textContent = h.textContent || "";
+      a.className = h.tagName === "H3" ? "depth-3" : "";
+      frag.appendChild(a);
+    });
+
+    container.appendChild(frag);
+  }
+
+  buildToc(tocDesktop);
+  buildToc(tocMobile);
+
+  // Mobile toggle
+  const toggle = document.getElementById("tocToggle");
+  const body = document.getElementById("tocBody");
+  if (toggle && body) {
+    toggle.addEventListener("click", () => {
+      const expanded = toggle.getAttribute("aria-expanded") === "true";
+      toggle.setAttribute("aria-expanded", String(!expanded));
+      body.hidden = expanded;
+    });
+  }
+
+  // Подсветка активного пункта TOC при скролле
+  const linksDesktop = tocDesktop ? Array.from(tocDesktop.querySelectorAll("a")) : [];
+  const linksMobile = tocMobile ? Array.from(tocMobile.querySelectorAll("a")) : [];
+
+  function setActive(id) {
+    [...linksDesktop, ...linksMobile].forEach((a) => {
+      const isActive = a.getAttribute("href") === `#${id}`;
+      a.classList.toggle("active", isActive);
+    });
+  }
+
+  if (headings.length) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => (a.boundingClientRect.top > b.boundingClientRect.top ? 1 : -1));
+
+        if (visible[0]?.target?.id) {
+          setActive(visible[0].target.id);
+        }
+      },
+      { root: null, threshold: 0.2, rootMargin: "-20% 0px -70% 0px" }
+    );
+
+    headings.forEach((h) => observer.observe(h));
+    setActive(headings[0].id);
+  }
+})();
